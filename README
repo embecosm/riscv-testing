@@ -1,0 +1,3 @@
+This repository contains tools for testing various configurations of
+RISC-V tool chains and targets, plus Jenkinsfiles for running these
+tests as part of a Jenkins job.
