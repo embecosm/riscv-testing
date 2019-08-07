@@ -87,15 +87,18 @@ node ('buildnode') {
       try {
         docker.image('embecosm/buildenv').inside {
           dir ('build/newlib') {
-            withEnv(["PATH+TOOLS=${WORKSPACE}"]) {
-              sh script: '''${WORKSPACE}/newlib/configure         \
-                            --target=riscv32-unknown-elf          \
-                            --prefix=${WORKSPACE}/install         \
-                            --with-arch=rv32gc                    \
-                            > ${WORKSPACE}/build/newlib-config.log 2>&1'''
-              sh script: '''make -j$(nproc) > ${WORKSPACE}/build/newlib-build.log 2>&1'''
-              sh script: '''make install > ${WORKSPACE}/build/newlib-install.log 2>&1'''
-            }
+            sh script: '''PATH="${WORKSPACE}/install/bin:$PATH" \
+                          ${WORKSPACE}/newlib/configure         \
+                          --target=riscv32-unknown-elf          \
+                          --prefix=${WORKSPACE}/install         \
+                          --with-arch=rv32gc                    \
+                          > ${WORKSPACE}/build/newlib-config.log 2>&1'''
+            sh script: '''PATH="${WORKSPACE}/install/bin:$PATH" \
+                          make -j$(nproc)                       \
+                          > ${WORKSPACE}/build/newlib-build.log 2>&1'''
+            sh script: '''PATH="${WORKSPACE}/install/bin:$PATH" \
+                          make install                          \
+                          > ${WORKSPACE}/build/newlib-install.log 2>&1'''
           }
         }
       }
