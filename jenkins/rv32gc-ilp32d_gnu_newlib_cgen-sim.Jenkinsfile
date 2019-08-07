@@ -4,6 +4,7 @@ node ('buildnode') {
   }
 
   stage('Checkout') {
+    checkout scm
     dir('binutils-gdb') {
       git url: 'https://sourceware.org/git/binutils-gdb.git', branch: 'master'
     }
@@ -32,29 +33,29 @@ node ('buildnode') {
       try {
         docker.image('embecosm/buildenv').inside {
           dir ('build/binutils-gdb') {
-            sh script: '''../../binutils-gdb/configure  \
-                          --target=riscv32-unknown-elf  \
-                          --prefix=$(pwd)/../../install \
-                          --disable-werror              \
-                          > ../binutils-config.log 2>&1'''
-            sh script: '''make -j$(nproc) > ../binutils-build.log 2>&1'''
-            sh script: '''make install > ../binutils-install.log 2>&1'''
+            sh script: '''${WORKSPACE}/binutils-gdb/configure  \
+                          --target=riscv32-unknown-elf         \
+                          --prefix=${WORKSPACE}/install        \
+                          --disable-werror                     \
+                          > ${WORKSPACE}/build/binutils-config.log 2>&1'''
+            sh script: '''make -j$(nproc) > ${WORKSPACE}/build/binutils-build.log 2>&1'''
+            sh script: '''make install > ${WORKSPACE}/build/binutils-install.log 2>&1'''
           }
           dir ('build/binutils-gdb-cgen') {
-            sh script: '''../../binutils-gdb-cgen/configure \
-                          --target=riscv32-unknown-elf      \
-                          --prefix=$(pwd)/../../install     \
-                          --disable-gdb                     \
-                          --enable-sim                      \
-                          --disable-werror                  \
-                          > ../sim-config.log 2>&1'''
-            sh script: '''make -j$(nproc) all-sim > ../sim-build.log 2>&1'''
-            sh script: '''make install-sim > ../sim-install.log 2>&1'''
+            sh script: '''${WORKSPACE}/binutils-gdb-cgen/configure \
+                          --target=riscv32-unknown-elf             \
+                          --prefix=${WORKSPACE}/install            \
+                          --disable-gdb                            \
+                          --enable-sim                             \
+                          --disable-werror                         \
+                          > ${WORKSPACE}/build/sim-config.log 2>&1'''
+            sh script: '''make -j$(nproc) all-sim > ${WORKSPACE}/build/sim-build.log 2>&1'''
+            sh script: '''make install-sim > ${WORKSPACE}/build/sim-install.log 2>&1'''
           }
           dir ('build/gcc') {
-            sh script: '''../../gcc/configure           \
+            sh script: '''${WORKSPACE}/gcc/configure    \
                           --target=riscv32-unknown-elf  \
-                          --prefix=$(pwd)/../../install \
+                          --prefix=${WORKSPACE}/install \
                           --without-newlib              \
                           --without-headers             \
                           --enable-languages=c          \
@@ -68,13 +69,12 @@ node ('buildnode') {
                           --disable-bootstrap           \
                           --with-arch=rv32gc            \
                           --with-abi=ilp32d             \
-                          > ../gcc-config.log 2>&1'''
-            sh script: '''make -j$(nproc) > ../gcc-build.log 2>&1'''
-            sh script: '''make install > ../gcc-install.log 2>&1'''
+                          > ${WORKSPACE}/build/gcc-config.log 2>&1'''
+            sh script: '''make -j$(nproc) > ${WORKSPACE}/build/gcc-build.log 2>&1'''
+            sh script: '''make install > ${WORKSPACE}/build/gcc-install.log 2>&1'''
           }
         }
       }
-      catch (Exception e) {}
       finally {
         archiveArtifacts allowEmptyArchive: true, fingerprint: true,
             artifacts: 'build/*.log'
@@ -87,18 +87,18 @@ node ('buildnode') {
       try {
         docker.image('embecosm/buildenv').inside {
           dir ('build/newlib') {
-            sh script: '''PATH=$(pwd)/../../install/bin:${PATH} \
-                          ../../newlib/configure                \
-                          --target=riscv32-unknown-elf          \
-                          --prefix=$(pwd)/../../install         \
-                          --with-arch=rv32gc                    \
-                          > ../newlib-config.log 2>&1'''
-            sh script: '''make -j$(nproc) > ../newlib-build.log 2>&1'''
-            sh script: '''make install > ../newlib-install.log 2>&1'''
+            withEnv(["PATH+TOOLS=${WORKSPACE}"]) {
+              sh script: '''${WORKSPACE}/newlib/configure         \
+                            --target=riscv32-unknown-elf          \
+                            --prefix=${WORKSPACE}/install         \
+                            --with-arch=rv32gc                    \
+                            > ${WORKSPACE}/build/newlib-config.log 2>&1'''
+              sh script: '''make -j$(nproc) > ${WORKSPACE}/build/newlib-build.log 2>&1'''
+              sh script: '''make install > ${WORKSPACE}/build/newlib-install.log 2>&1'''
+            }
           }
         }
       }
-      catch (Exception e) {}
       finally {
         archiveArtifacts allowEmptyArchive: true, fingerprint: true,
             artifacts: 'build/*.log'
@@ -114,9 +114,9 @@ node ('buildnode') {
                         --triple riscv32-unknown-elf          \
                         --arch rv32gc                         \
                         --abi ilp32d                          \
-                        --tools-dir $(pwd)/install/bin        \
+                        --tools-dir ${WORKSPACE}/install/bin  \
                         --cc riscv32-unknown-elf-gcc          \
-                        --gcc-source $(pwd)/gcc               \
+                        --gcc-source ${WORKSPACE}/gcc         \
                         --sim-command riscv32-unknown-elf-run \
                         > check-gcc.log 2>&1'''
         }
