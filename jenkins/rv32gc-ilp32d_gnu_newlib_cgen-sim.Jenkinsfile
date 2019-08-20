@@ -56,7 +56,7 @@ node ('buildnode') {
             sh script: '''${WORKSPACE}/gcc/configure    \
                           --target=riscv32-unknown-elf  \
                           --prefix=${WORKSPACE}/install \
-                          --without-newlib              \
+                          --with-newlib                 \
                           --without-headers             \
                           --enable-languages=c          \
                           --disable-werror              \
