@@ -50,6 +50,8 @@ parser.add_argument('--tools-dir', dest='tools_dir',
                     default=os.path.join(TOPDIR, 'install', 'bin'))
 parser.add_argument('--cc', dest='cc',
                     default='riscv64-unknown-elf-clang')
+parser.add_argument('--cxx', dest='cxx',
+                    default='riscv64-unknown-elf-clang++')
 parser.add_argument('--cflags', dest='cflags',
                     default='')
 parser.add_argument('--sim-command', dest='sim_command',
@@ -125,8 +127,6 @@ CXX_TESTS = [
     TestSet('g++', 'g++.dg', '', 'dg.exp')
 ]
 
-# FIXME: The RISC-V baseboard does not work with clang++, don't run the g++
-#        tests until this is investigated
 TEST_SETS = TORTURE_TESTS + DG_TESTS
 
 # The number of tests to pass to a single Dejagnu invocation at once
@@ -215,10 +215,17 @@ def runtests(i, test_set, tests):
     test_list = " ".join([ os.path.join(test_set.sub_dir, test)
                            for test in tests ])
     test_board = 'riscv-sim/-march=%s/-mabi=%s' % (script_args.arch, script_args.abi)
+
+    # Default to using cc as the tool under test, unless the test is
+    # explicitly for c++
+    tool_exec = script_args.cc
+    if test_set.tool == 'g++':
+        tool_exec = script_args.cxx
+
     args = [
         'runtest',
         '--tool=%s' % test_set.tool,
-        '--tool_exec=%s' % script_args.cc,
+        '--tool_exec=%s' % tool_exec,
         '--tool_opts=%s' % script_args.cflags.strip('\"\''),
         '--directory=%s' % os.path.join(TEST_SUITE, set_dir),
         '--srcdir=%s' % TEST_SUITE,
