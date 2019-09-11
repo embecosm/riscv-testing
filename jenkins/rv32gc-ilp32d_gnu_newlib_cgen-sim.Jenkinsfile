@@ -9,7 +9,7 @@ node ('buildnode') {
       git url: 'https://sourceware.org/git/binutils-gdb.git', branch: 'master'
     }
     dir('binutils-gdb-cgen') {
-      git url: 'https://github.com/embecosm/riscv-binutils-gdb.git', branch: 'wip-cgen'
+      git url: 'https://github.com/embecosm/riscv-binutils-gdb.git', branch: 'cgen-sim-patch'
     }
     dir('gcc') {
       checkout([$class: 'GitSCM',
@@ -109,6 +109,25 @@ node ('buildnode') {
     }
   }
 
+  stage('Simulator testsuite') {
+    timeout(120) {
+      try {
+        docker.image('embecosm/buildenv').inside {
+          dir ('build/binutils-gdb-cgen') {
+            sh script: '''PATH="${WORKSPACE}/install/bin:$PATH" \
+                          make check-sim                        \
+                          > ${WORKSPACE}/check-gas.log 2>&1'''
+          }
+        }
+      }
+      catch (Exception e) {}
+      finally {
+        archiveArtifacts allowEmptyArchive: true, fingerprint: true,
+            artifacts: 'check-gas.log, build/binutils-gdb-cgen/sim/testsuite/sim.log, build/binutils-gdb-cgen/sim/sim.sum'
+      }
+    }
+  }
+
   stage('GCC regression') {
     timeout(120) {
       try {
@@ -121,7 +140,7 @@ node ('buildnode') {
                         --cc riscv32-unknown-elf-gcc          \
                         --gcc-source ${WORKSPACE}/gcc         \
                         --sim-command riscv32-unknown-elf-run \
-                        > check-gcc.log 2>&1'''
+                        > ${WORKSPACE}/check-gcc.log 2>&1'''
         }
       }
       catch (Exception e) {}

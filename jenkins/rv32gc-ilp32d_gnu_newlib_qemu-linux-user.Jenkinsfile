@@ -8,9 +8,6 @@ node ('buildnode') {
     dir('binutils-gdb') {
       git url: 'https://sourceware.org/git/binutils-gdb.git', branch: 'master'
     }
-    dir('binutils-gdb-cgen') {
-      git url: 'https://github.com/embecosm/riscv-binutils-gdb.git', branch: 'wip-cgen'
-    }
     dir('gcc') {
       checkout([$class: 'GitSCM',
                 branches: [[name: '*/master']],
@@ -137,7 +134,7 @@ node ('buildnode') {
                         --cc riscv32-unknown-elf-gcc         \
                         --gcc-source ${WORKSPACE}/gcc        \
                         --sim-command qemu-riscv32           \
-                        > check-gcc.log 2>&1'''
+                        > ${WORKSPACE}/check-gcc.log 2>&1'''
         }
       }
       catch (Exception e) {}
