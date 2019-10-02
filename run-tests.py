@@ -54,8 +54,14 @@ parser.add_argument('--cxx', dest='cxx',
                     default='riscv64-unknown-elf-clang++')
 parser.add_argument('--cflags', dest='cflags',
                     default='')
+parser.add_argument('--board', dest='board',
+                    default='riscv-sim')
+# If the target board is a standalone simulator, --sim-command specifies
+# the command to run the simulator.
 parser.add_argument('--sim-command', dest='sim_command',
                     default='riscv64-unknown-elf-sim')
+# If the target board is a standalone simulator, or a gdb simulator, then
+# --sim-flags specifies flags to be passed to the simulator.
 parser.add_argument('--sim-flags', dest='sim_flags',
                     default='')
 script_args = parser.parse_args()
@@ -214,7 +220,7 @@ def runtests(i, test_set, tests):
 
     test_list = " ".join([ os.path.join(test_set.sub_dir, test)
                            for test in tests ])
-    test_board = 'riscv-sim/-march=%s/-mabi=%s' % (script_args.arch, script_args.abi)
+    test_board = '%s/-march=%s/-mabi=%s' % (script_args.board, script_args.arch, script_args.abi)
 
     # Default to using cc as the tool under test, unless the test is
     # explicitly for c++

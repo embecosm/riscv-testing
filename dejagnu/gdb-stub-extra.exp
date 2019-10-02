@@ -1,8 +1,5 @@
 # Copyright (C) 2017-2019 Embecosm Limited.
 
-# Contributor Jeremy Bennett <jeremy.bennett@embecosm.com>
-# Contributor Ian Bolton <ian.bolton@embecosm.com>
-
 # This file provides supplementary GDB stub procs for RISC-V testing
 
 # This program is free software; you can redistribute it and/or modify it
@@ -143,6 +140,12 @@ proc gdb_stub_ld { dest prog } {
 	}
     }
 
+    # Disable any styling to prevent it from confusing expect.
+    remote_send host "set style enabled off\n"
+    remote_expect host 10 {
+	-re "$gdb_prompt" { }
+    }
+
     # Set GDB's width and height to 0 (which means unlimited) this
     # should help reduce the number of prompts we get, and should
     # prevent (or help prevent) readline inserting line breaks into
@@ -179,7 +182,7 @@ proc gdb_stub_ld { dest prog } {
 	    remote_send host "y\n"
 	    exp_continue
 	}
-	-re "Reading symbols from.*done..*$gdb_prompt $" {}
+	-re "Reading symbols from.*$gdb_prompt $" {}
 	-re "$gdb_prompt $" {
 	    # Hmmm...is retrying going to help? I kinda doubt it.
 	    warning "GDB couldn't read file"
@@ -272,6 +275,24 @@ proc gdb_stub_ld { dest prog } {
 		return { "fail" "" }
 	    }
 	}
+    }
+
+    # Work around an issue with ri5cy where we have to do single-steps
+    # before loading so that continues starts from the correct address.
+    # FIXME: Make this configurable
+    remote_send host "stepi\n"
+    remote_expect host 10 {
+      -re ".*$gdb_prompt $" { }
+      default {
+          return { "fail" "" }
+      }
+    }
+    remote_send host "stepi\n"
+    remote_expect host 10 {
+      -re ".*$gdb_prompt $" { }
+      default {
+          return { "fail" "" }
+      }
     }
 
     if {[board_info $dest exists gdb_load_offset]} {
