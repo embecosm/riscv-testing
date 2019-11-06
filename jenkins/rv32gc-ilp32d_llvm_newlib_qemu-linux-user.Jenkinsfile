@@ -95,7 +95,7 @@ node ('buildnode') {
           dir ('build/compiler-rt') {
             sh script: '''cmake ${WORKSPACE}/llvm/compiler-rt                     \
                           -G "Ninja"                                              \
-                          -DCMAKE_INSTALL_PREFIX=${WORKSPACE}/install/riscv32-unknown-elf \
+                          -DCMAKE_INSTALL_PREFIX=$(${WORKSPACE}/install/bin/clang -print-resource-dir) \
                           -DCOMPILER_RT_BUILD_BUILTINS=ON                         \
                           -DCOMPILER_RT_BUILD_SANITIZERS=OFF                      \
                           -DCOMPILER_RT_BUILD_XRAY=OFF                            \
